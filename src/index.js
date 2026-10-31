@@ -1,8 +1,8 @@
 import express from 'express'
 import env from 'dotenv'
+env.config()
 import userRoute from './routes/user.route.js';
 import { databaseConnection } from './db.connection.js';
-env.config()
 
 const application = express();
 
@@ -10,6 +10,7 @@ application.use(express.json());
 application.use(express.urlencoded({ extended: true }))
 
 application.use("/api/v1/user", userRoute)
+application.use("/api/v1/market", userRoute)
 
 function main() {
     databaseConnection(process.env.DATABASE_CONNECTION_URL)
