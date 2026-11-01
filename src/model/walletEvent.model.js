@@ -9,7 +9,7 @@ const walletSchema = new mongoose.Schema({
     },
     tx_type: {
         type: String,
-        enum: ['onremp', 'created', 'bet', 'payload', 'refund'],
+        enum: ['onremp', 'created', 'bet', 'payout', 'refund'],
         required: true
     },
     externalId: {
