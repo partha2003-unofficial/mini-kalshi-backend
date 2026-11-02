@@ -1,4 +1,4 @@
-import { betModel, betModel } from "../model/bet.model.js";
+import { betModel } from "../model/bet.model.js";
 import { marketModel } from "../model/market.model.js";
 import { userModel } from "../model/user.model.js";
 import { walletModel } from "../model/walletEvent.model.js";
@@ -26,7 +26,7 @@ export async function resolveMarket(request, response) {
             })
         }
 
-        if (market.resolution == null) {
+        if (!market.resolution == null) {
             return response.status(400).json({
                 message: 'market is already resolved !'
             })

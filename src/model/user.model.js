@@ -9,12 +9,12 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required
+        required :true
     },
     email: {
         type: String,
         required: true,
-        unique
+        unique :true
     },
     balance: {
         type: Number,

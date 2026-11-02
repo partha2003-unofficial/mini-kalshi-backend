@@ -1,6 +1,6 @@
 import { betModel } from "../model/bet.model.js";
 import { marketModel } from "../model/market.model.js";
-import { userModel } from "../model/user.model";
+import { userModel } from "../model/user.model.js";
 import { walletModel } from "../model/walletEvent.model.js";
 import { createBetValidation, createMarketValidation } from "../validators/market.validation.js";
 
@@ -10,11 +10,10 @@ export async function createMarket(request, response) {
         /*error handlers*/
 
         const { data, error } = createMarketValidation.safeParse(request.body);
-        if (error) { return response.status(400).json({ message: 'enter valid detailes' }) };
+        if (error) { return response.status(400).json({ message: 'enter valid detailes', error: error }) };
 
         const user = await userModel.findById(request.user.id);
         if (!user) { return response.status(400).json({ message: 'user is not found !' }) }
-
         if (data.initialWager > user.balance) {
             return response.status(400).json({
                 message: 'insuffecent balance',
@@ -29,7 +28,7 @@ export async function createMarket(request, response) {
 
         /*execution*/
 
-        user.balance -= initialWager;
+        user.balance -= data.initialWager;
         await user.save();
 
         const createMarket = await marketModel.create({
@@ -65,7 +64,7 @@ export async function getMarkets(request, response) {
             })
             .populate('createrId', 'userName')
 
-        if (!markets) { return response.status(200).json({ message: 'no markets are present!' }) }
+        if (!markets || markets.length == 0) { return response.status(200).json({ message: 'no markets are present!' }) }
 
         return response.status(200).json({
             message: 'all markets are fatched..',
@@ -85,8 +84,7 @@ export async function placeBet(request, response) {
 
     try {
         const { marketId, betAmount } = data;
-
-        const market = await marketModel.findById(marketId);
+        const market = await marketModel.findById(marketId)
 
         if (!market) {
             return response.status(400).json({
@@ -94,7 +92,7 @@ export async function placeBet(request, response) {
             })
         }
 
-        if (market.expirey <= new data()) {
+        if (market.expirey <= new Date()) {
             return response.status(400).json({
                 message: 'market is already exist'
             })
@@ -106,15 +104,15 @@ export async function placeBet(request, response) {
             })
         }
 
-        if (market.createrId == response.user.id) {
+        if (market.createrId == request.user.id) {
             return response.status(400).json({
                 message: 'market creator cannot bet in his market'
             })
         }
 
-        const existingBets = await betModel.findById(marketId);
-        const allBetsTotalAmount = existingBets.reduce(
-            (sum, bet) => sum += bet.betAmount
+        const existingBets = await betModel.find({marketId:marketId});
+        const allBetsTotalAmount = existingBets?.reduce(
+            (sum, bet) => sum += bet.betAmount,0
         )
 
         if (allBetsTotalAmount + betAmount > market.initialWager) {

@@ -1,6 +1,6 @@
-import express from 'express'
 import env from 'dotenv'
 env.config()
+import express from 'express'
 import userRoute from './routes/user.route.js';
 import { databaseConnection } from './db.connection.js';
 import marketRoute from './routes/maket.route.js';
@@ -21,4 +21,4 @@ function main() {
     application.listen(process.env.BACKEND_PORT, () => console.log('server is running..'));
 }
 
-main().catch(console.error)
+main()

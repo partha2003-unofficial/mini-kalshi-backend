@@ -16,7 +16,7 @@ async function signup_user(request, response) {
 
             const user = await userModel.create({
                 userName,
-                password: passwordHash,
+                password: HashedPassword,
                 email,
                 balance
             })
@@ -31,24 +31,32 @@ async function signup_user(request, response) {
 }
 
 async function signin_user(request, response) {
-    const { success, data, error } = signinValidation.safeParse(request.body);
+    const { data, error } = signinValidation.safeParse(request.body);
     if (error) { return response.status(400).json({ message: 'enter valid detailes' }) }
 
     try {
-        if (success) {
-            const { userName, password } = data
-            const user = await userModel.findOne(userName)
-
-            await compareHashPassword(password, user.password)
-                .then(() => {
-                    const token = createToken(user);
-                    request.user = user;
-                    response.cookie('user_cookie', token);
-                    return response.status(200).json({ message: 'user loggedin successfully', user: user });
-
-                })
-                .catch((error) => { return response.status(400).json({ message: 'user is not authenticated!' }) })
+        const { userName, password } = data
+        const user = await userModel.findOne({ userName })
+        if (!user) {
+            return response.status(400).json({
+                message: 'user is not founded !'
+            })
         }
+
+        const verifyPassword = compareHashPassword(password, user.password)
+        if (verifyPassword == false) {
+            response.status(404).json({ message: 'password is not validate' })
+        }
+
+        const token = createToken(user);
+        request.user = user;
+        response.cookie('user_cookie', token);
+        return response.status(200).json({
+            message: 'user loggedin successfully',
+            user: user,
+            token: token
+        });
+
     } catch (error) {
         return response.status(500).json({ message: 'internal server error', error: error })
     }
@@ -77,7 +85,8 @@ async function addBalance(request, response) {
             return response.status(200).json({
                 message: 'amound creadited',
                 amount: data.balance,
-                transection: walletTransection
+                transection: walletTransection,
+                user: user
             })
         }
     } catch (error) {
@@ -105,7 +114,7 @@ async function userProfile(request, response) {
 async function userTransection(request, response) {
 
     try {
-        const userTransection = await walletModel.findById(request.user.id)
+        const userTransection = await walletModel.find({ userId: request.user.id })
         if (!userTransection) { return response.status(400).json({ message: 'user Transection is not found !' }) }
 
         return response.status(200).json({
