@@ -26,7 +26,7 @@ export async function resolveMarket(request, response) {
             })
         }
 
-        if (!market.resolution == null) {
+        if (market.resolution !== null) {
             return response.status(400).json({
                 message: 'market is already resolved !'
             })
@@ -34,9 +34,10 @@ export async function resolveMarket(request, response) {
 
         /* excution */
         const marketAccordingBets = await betModel.find({ marketId: data.marketId })
-        const totalAmountAllBets = marketAccordingBets
-            .reduce((totalAmount, currentBitAmount) => {
-                totalAmount + currentBitAmount.betAmount
+        
+        const totalAmountAllBets = marketAccordingBets.reduce(
+            (totalAmount, currentBitAmount) => {
+                return totalAmount + currentBitAmount.betAmount, 0
             })
 
         // if creator win 
@@ -46,8 +47,7 @@ export async function resolveMarket(request, response) {
             await userModel
                 .findByIdAndUpdate(
                     market.createrId,
-                    { $inc: { balance: amount } },
-                    { new: true }
+                    { $inc: { balance: amount } }
                 )
 
             await walletModel.create({
